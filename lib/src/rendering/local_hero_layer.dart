@@ -1,5 +1,6 @@
 import 'package:flutter/animation.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:local_hero/src/rendering/controller.dart';
 import 'package:local_hero/src/rendering/layer.dart';
 
@@ -144,6 +145,16 @@ class RenderLocalHeroFollowerLayer extends RenderProxyBox {
         : constraints.enforce(BoxConstraints.tight(requestedSize));
     child!.layout(childConstraints, parentUsesSize: true);
     size = constraints.constrain(child!.size);
+
+    if (requestedSize == null) {
+      // The size is not known yet, let's wait for the next frame.
+      // This happens e.g. when the widget is animated (e.g. flutter_animate).
+      // Removing this "workaround" will result in a flickering effect where the
+      // first frame of the animation takes the full size of the LocalHeroScope.
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        markNeedsLayout();
+      });
+    }
   }
 
   @override
