@@ -31,6 +31,7 @@ class LocalHero extends StatefulWidget {
     this.flightShuttleBuilder,
     this.enabled = true,
     required this.child,
+    this.onAnimationEnd,
   }) : super(key: key);
 
   /// The identifier for this particular local hero. This tag must be unique
@@ -53,12 +54,13 @@ class LocalHero extends StatefulWidget {
   /// {@macro flutter.widgets.child}
   final Widget child;
 
+  final VoidCallback? onAnimationEnd;
+
   @override
   _LocalHeroState createState() => _LocalHeroState();
 }
 
-class _LocalHeroState extends State<LocalHero>
-    with SingleTickerProviderStateMixin<LocalHero> {
+class _LocalHeroState extends State<LocalHero> with SingleTickerProviderStateMixin<LocalHero> {
   late LocalHeroController controller;
   late LocalHeroScopeState scopeState;
 
@@ -67,11 +69,19 @@ class _LocalHeroState extends State<LocalHero>
     super.initState();
     scopeState = context.getLocalHeroScopeState();
     controller = scopeState.track(context, widget);
+    controller.addListener(_animationListener);
+  }
+
+  void _animationListener() {
+    if (controller.tag == widget.tag && controller.isAnimating == false) {
+      widget.onAnimationEnd?.call();
+    }
   }
 
   @override
   void dispose() {
     scopeState.untrack(widget);
+    controller.removeListener(_animationListener);
     super.dispose();
   }
 
